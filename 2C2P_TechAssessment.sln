@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34616.47
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "2C2P_TechAssessment", "2C2P_TechAssessment\2C2P_TechAssessment.csproj", "{F664D880-EBA5-4EA2-ACF6-C9C01377DAF6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F664D880-EBA5-4EA2-ACF6-C9C01377DAF6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F664D880-EBA5-4EA2-ACF6-C9C01377DAF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F664D880-EBA5-4EA2-ACF6-C9C01377DAF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F664D880-EBA5-4EA2-ACF6-C9C01377DAF6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B613C76D-37AD-4DF8-A5F0-FD1A5A8BDA8D}
+	EndGlobalSection
+EndGlobal
