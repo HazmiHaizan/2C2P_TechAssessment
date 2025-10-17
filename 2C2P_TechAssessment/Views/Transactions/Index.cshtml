@@ -1,85 +1,247 @@
 ﻿@{
-    ViewData["Title"] = "Transactions";
+    ViewData["Title"] = "Transaction Uploader";
 }
-<h1>Transactions</h1>
 
-<section style="background:#fff;padding:16px;border-radius:8px;">
-  <h3>Upload CSV or XML (max 1MB)</h3>
-  <input type="file" id="fileInput" accept=".csv,.xml" />
-  <button id="uploadBtn">Upload</button>
-  <pre id="uploadResult"></pre>
-</section>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
 
-<section style="margin-top:12px;background:#fff;padding:16px;border-radius:8px;">
-  <h3>Query transactions</h3>
-
-  <div>
-    <label>By Currency (3-letter):</label>
-    <input id="currency" placeholder="USD" />
-    <button id="btnCurrency">Get</button>
-  </div>
-
-  <div style="margin-top:8px;">
-    <label>By Status (A,R,D):</label>
-    <input id="status" placeholder="A" />
-    <button id="btnStatus">Get</button>
-  </div>
-
-  <div style="margin-top:8px;">
-    <label>Date range:</label>
-    <input type="date" id="start" /> to <input type="date" id="end" />
-    <button id="btnDate">Get</button>
-  </div>
-
-  <pre id="queryResult" style="margin-top:12px;"></pre>
-</section>
-
-<script>
-document.getElementById('uploadBtn').addEventListener('click', async () => {
-    const fileInput = document.getElementById('fileInput');
-    if (!fileInput.files.length) return alert('Select a file first');
-    const form = new FormData();
-    form.append('file', fileInput.files[0]);
-
-    const resDiv = document.getElementById('uploadResult');
-    resDiv.textContent = "Uploading...";
-
-    const resp = await fetch('/Transactions/Upload', { method: 'POST', body: form });
-    const text = await resp.text();
-    if (resp.ok) {
-        resDiv.style.color = 'green';
-        resDiv.textContent = text;
-    } else {
-        resDiv.style.color = 'red';
-        try {
-            const obj = JSON.parse(text);
-            resDiv.textContent = JSON.stringify(obj, null, 2);
-        } catch {
-            resDiv.textContent = text;
+    <!-- ✅ Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
         }
-    }
-});
 
-document.getElementById('btnCurrency').addEventListener('click', async () => {
-    const code = document.getElementById('currency').value;
-    const r = await fetch('/Transactions/ByCurrency?code=' + encodeURIComponent(code));
-    const j = await r.json();
-    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
-});
+        .container {
+            max-width: 900px;
+        }
 
-document.getElementById('btnStatus').addEventListener('click', async () => {
-    const s = document.getElementById('status').value;
-    const r = await fetch('/Transactions/ByStatus?status=' + encodeURIComponent(s));
-    const j = await r.json();
-    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
-});
+        .card {
+            border-radius: 12px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
 
-document.getElementById('btnDate').addEventListener('click', async () => {
-    const start = document.getElementById('start').value;
-    const end = document.getElementById('end').value;
-    if (!start || !end) return alert('Set both dates');
-    const r = await fetch(`/Transactions/ByDateRange?start=${start}&end=${end}`);
-    const j = await r.json();
-    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
-});
-</script>
+        .table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .status-A {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-R {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .status-D {
+            color: #0d6efd;
+            font-weight: bold;
+        }
+
+        .spinner-border {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-5">💳 Transaction Import & Viewer</h1>
+
+        <!-- Upload Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                Upload Transaction File
+            </div>
+            <div class="card-body">
+                <p class="mb-3 text-muted">Supported formats: <b>CSV</b> or <b>XML</b> (max 1MB)</p>
+                <div class="input-group mb-3">
+                    <input type="file" class="form-control" id="fileInput" accept=".csv,.xml">
+                    <button class="btn btn-primary" id="uploadBtn">
+                        <span id="uploadText">Upload</span>
+                        <span id="uploadSpinner" class="spinner-border spinner-border-sm d-none"></span>
+                    </button>
+                </div>
+                <div id="uploadAlert" class="alert d-none" role="alert"></div>
+            </div>
+        </div>
+
+        <!-- Query Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white">
+                Filter Transactions
+            </div>
+            <div class="card-body">
+                <form class="row gy-3">
+                    <div class="col-md-4">
+                        <label class="form-label">By Currency</label>
+                        <div class="input-group">
+                            <input type="text" id="currency" class="form-control" placeholder="USD">
+                            <button class="btn btn-outline-success" type="button" id="btnCurrency">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">By Status</label>
+                        <div class="input-group">
+                            <select id="status" class="form-select">
+                                <option value="">Select</option>
+                                <option value="A">Approved</option>
+                                <option value="R">Rejected</option>
+                                <option value="D">Done</option>
+                            </select>
+                            <button class="btn btn-outline-success" type="button" id="btnStatus">Search</button>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">By Date Range</label>
+                        <div class="input-group">
+                            <input type="date" id="start" class="form-control">
+                            <input type="date" id="end" class="form-control">
+                            <button class="btn btn-outline-success" type="button" id="btnDate">Go</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                Results
+            </div>
+            <div class="card-body">
+                <div id="resultAlert" class="alert d-none" role="alert"></div>
+                <table class="table table-striped table-hover" id="resultTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th>Transaction ID</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const uploadBtn = document.getElementById('uploadBtn');
+        const uploadText = document.getElementById('uploadText');
+        const uploadSpinner = document.getElementById('uploadSpinner');
+        const uploadAlert = document.getElementById('uploadAlert');
+        const resultAlert = document.getElementById('resultAlert');
+        const resultTable = document.getElementById('resultTable');
+        const resultBody = document.getElementById('resultBody');
+
+        // Helper: Show alert
+        function showAlert(element, type, message) {
+            element.className = 'alert alert-' + type;
+            element.textContent = message;
+            element.classList.remove('d-none');
+        }
+
+        // Helper: Hide alert
+        function hideAlert(element) {
+            element.classList.add('d-none');
+        }
+
+        // Upload file
+        uploadBtn.addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                showAlert(uploadAlert, 'warning', 'Please select a file first.');
+                return;
+            }
+
+            hideAlert(uploadAlert);
+            uploadSpinner.classList.remove('d-none');
+            uploadText.textContent = 'Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/Transactions/Upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const text = await res.text();
+                uploadSpinner.classList.add('d-none');
+                uploadText.textContent = 'Upload';
+
+                if (res.ok) {
+                    showAlert(uploadAlert, 'success', '✅ ' + text);
+                } else {
+                    const msg = text.includes('{') ? JSON.stringify(JSON.parse(text), null, 2) : text;
+                    showAlert(uploadAlert, 'danger', msg);
+                }
+            } catch (err) {
+                showAlert(uploadAlert, 'danger', 'Error: ' + err.message);
+            }
+        });
+
+        // Generic fetcher for filter buttons
+        async function fetchAndDisplay(url) {
+            hideAlert(resultAlert);
+            resultTable.style.display = 'none';
+            resultBody.innerHTML = '';
+
+            const res = await fetch(url);
+            if (!res.ok) {
+                const msg = await res.text();
+                showAlert(resultAlert, 'danger', msg);
+                return;
+            }
+
+            const data = await res.json();
+            if (!data.length) {
+                showAlert(resultAlert, 'info', 'No transactions found.');
+                return;
+            }
+
+            data.forEach(t => {
+                const row = `<tr>
+                            <td>${t.id}</td>
+                            <td>${t.payment}</td>
+                            <td class="status-${t.status}">${t.status}</td>
+                        </tr>`;
+                resultBody.insertAdjacentHTML('beforeend', row);
+            });
+            resultTable.style.display = 'table';
+        }
+
+        document.getElementById('btnCurrency').addEventListener('click', () => {
+            const code = document.getElementById('currency').value.trim();
+            if (!code) return showAlert(resultAlert, 'warning', 'Enter currency code.');
+            fetchAndDisplay(`/Transactions/ByCurrency?code=${code}`);
+        });
+
+        document.getElementById('btnStatus').addEventListener('click', () => {
+            const s = document.getElementById('status').value;
+            if (!s) return showAlert(resultAlert, 'warning', 'Select a status.');
+            fetchAndDisplay(`/Transactions/ByStatus?status=${s}`);
+        });
+
+        document.getElementById('btnDate').addEventListener('click', () => {
+            const start = document.getElementById('start').value;
+            const end = document.getElementById('end').value;
+            if (!start || !end) return showAlert(resultAlert, 'warning', 'Select both start and end dates.');
+            fetchAndDisplay(`/Transactions/ByDateRange?start=${start}&end=${end}`);
+        });
+    </script>
+</body>
+</html>
