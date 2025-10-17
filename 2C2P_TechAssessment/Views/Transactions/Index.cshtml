@@ -1,0 +1,85 @@
+﻿@{
+    ViewData["Title"] = "Transactions";
+}
+<h1>Transactions</h1>
+
+<section style="background:#fff;padding:16px;border-radius:8px;">
+  <h3>Upload CSV or XML (max 1MB)</h3>
+  <input type="file" id="fileInput" accept=".csv,.xml" />
+  <button id="uploadBtn">Upload</button>
+  <pre id="uploadResult"></pre>
+</section>
+
+<section style="margin-top:12px;background:#fff;padding:16px;border-radius:8px;">
+  <h3>Query transactions</h3>
+
+  <div>
+    <label>By Currency (3-letter):</label>
+    <input id="currency" placeholder="USD" />
+    <button id="btnCurrency">Get</button>
+  </div>
+
+  <div style="margin-top:8px;">
+    <label>By Status (A,R,D):</label>
+    <input id="status" placeholder="A" />
+    <button id="btnStatus">Get</button>
+  </div>
+
+  <div style="margin-top:8px;">
+    <label>Date range:</label>
+    <input type="date" id="start" /> to <input type="date" id="end" />
+    <button id="btnDate">Get</button>
+  </div>
+
+  <pre id="queryResult" style="margin-top:12px;"></pre>
+</section>
+
+<script>
+document.getElementById('uploadBtn').addEventListener('click', async () => {
+    const fileInput = document.getElementById('fileInput');
+    if (!fileInput.files.length) return alert('Select a file first');
+    const form = new FormData();
+    form.append('file', fileInput.files[0]);
+
+    const resDiv = document.getElementById('uploadResult');
+    resDiv.textContent = "Uploading...";
+
+    const resp = await fetch('/Transactions/Upload', { method: 'POST', body: form });
+    const text = await resp.text();
+    if (resp.ok) {
+        resDiv.style.color = 'green';
+        resDiv.textContent = text;
+    } else {
+        resDiv.style.color = 'red';
+        try {
+            const obj = JSON.parse(text);
+            resDiv.textContent = JSON.stringify(obj, null, 2);
+        } catch {
+            resDiv.textContent = text;
+        }
+    }
+});
+
+document.getElementById('btnCurrency').addEventListener('click', async () => {
+    const code = document.getElementById('currency').value;
+    const r = await fetch('/Transactions/ByCurrency?code=' + encodeURIComponent(code));
+    const j = await r.json();
+    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
+});
+
+document.getElementById('btnStatus').addEventListener('click', async () => {
+    const s = document.getElementById('status').value;
+    const r = await fetch('/Transactions/ByStatus?status=' + encodeURIComponent(s));
+    const j = await r.json();
+    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
+});
+
+document.getElementById('btnDate').addEventListener('click', async () => {
+    const start = document.getElementById('start').value;
+    const end = document.getElementById('end').value;
+    if (!start || !end) return alert('Set both dates');
+    const r = await fetch(`/Transactions/ByDateRange?start=${start}&end=${end}`);
+    const j = await r.json();
+    document.getElementById('queryResult').textContent = JSON.stringify(j, null, 2);
+});
+</script>

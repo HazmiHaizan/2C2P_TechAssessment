@@ -1,7 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using _2C2P_TechAssessment.Data;
+using _2C2P_TechAssessment.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ??
+                        "Data Source=transactions.db"));
+builder.Services.AddScoped<ITransactionParserService, TransactionParserService>();
 
 var app = builder.Build();
 
