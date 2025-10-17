@@ -20,6 +20,8 @@ namespace _2C2P_TechAssessment.Services
 
     public class TransactionParserService : ITransactionParserService
     {
+        //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
         public async Task<ParseResult> ParseAsync(Stream inputStream, string fileName, CancellationToken ct = default)
         {
             var result = new ParseResult();
@@ -42,6 +44,8 @@ namespace _2C2P_TechAssessment.Services
 
             return result;
         }
+
+        //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         private ParseResult ParseCsv(TextReader reader)
         {
@@ -148,6 +152,8 @@ namespace _2C2P_TechAssessment.Services
                 Status = status
             });
         }
+
+        //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
         private ParseResult ParseXml(string xml)
         {
