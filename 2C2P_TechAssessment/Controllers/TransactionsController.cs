@@ -23,6 +23,8 @@ namespace _2C2P_TechAssessment.Controllers
 
         public IActionResult Index() => View();
 
+
+        // /Transactions/Upload
         [HttpPost]
         [RequestSizeLimit(1 * 1024 * 1024)]
         public async Task<IActionResult> Upload(IFormFile? file)
@@ -66,6 +68,7 @@ namespace _2C2P_TechAssessment.Controllers
         //-------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
+        // /Transactions/ByCurrency?code=<currency>
         [HttpGet]
         public async Task<IActionResult> ByCurrency(string code)
         {
@@ -87,6 +90,7 @@ namespace _2C2P_TechAssessment.Controllers
             return Json(list);
         }
 
+        // /Transaction/ByStatus?status=<status>
         [HttpGet]
         public async Task<IActionResult> ByStatus(string status)
         {
@@ -107,6 +111,7 @@ namespace _2C2P_TechAssessment.Controllers
             return Json(list);
         }
 
+        // /Transaction/ByDateRange?start=<from>&end=<to>
         [HttpGet]
         public async Task<IActionResult> ByDateRange(DateTime start, DateTime end)
         {
