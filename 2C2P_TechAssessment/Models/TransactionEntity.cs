@@ -22,7 +22,7 @@ namespace _2C2P_TechAssessment.Models
         public DateTime TransactionDate { get; set; }
 
         [Required]
-        [MaxLength(10)]
+        [MaxLength(1)]
         public string Status { get; set; } 
     }
 }
